@@ -57,7 +57,7 @@ module Data.Type.Universe (
   , ElemSym0, ElemSym1, ElemSym2, GetCompSym0, GetCompSym1
   -- * Singletons
   , SIndex(..), SIJust(..), SIRight(..), SNEIndex(..), SISnd(..), SIProxy, SIIdentity(..)
-  , Sing (SComp, SInL, SIndex', SIJust', SIRight', SNEIndex', SISnd', SIProxy', SIIdentity')
+  , Sing -- (SComp, SInL, SIndex', SIJust', SIRight', SNEIndex', SISnd', SIProxy', SIIdentity')
   ) where
 
 import           Control.Applicative
@@ -134,7 +134,7 @@ instance (Universe f, Decidable p) => Decidable (All f p) where
 instance (Universe f, Provable p) => Decidable (NotNull f ==> Any f p) where
 
 instance Provable p => Provable (NotNull f ==> Any f p) where
-    prove _ (WitAny i s) = WitAny i (prove @p s)
+    prove _ (WitAny i s) = WitAny i (prove @p $ unwrapSing s)
 
 instance (Universe f, Provable p) => Provable (All f p) where
     prove xs = WitAll $ \i -> prove @p (index i xs)
@@ -306,8 +306,9 @@ data SIndex as a :: Index as a -> Type where
 
 deriving instance Show (SIndex as a i)
 
-newtype instance Sing (i :: Index as a) where
-    SIndex' :: SIndex as a i -> Sing i
+newtype SIndex' (i :: Index as a) where
+    SIndex' :: SIndex as a i -> SIndex' i
+type instance Sing = SIndex'
 
 instance SingI 'IZ where
     sing = SIndex' SIZ
@@ -431,8 +432,9 @@ data SIJust as a :: IJust as a -> Type where
 
 deriving instance Show (SIJust as a i)
 
-newtype instance Sing (i :: IJust as a) where
-    SIJust' :: SIJust as a i -> Sing i
+newtype SIJust' (i :: IJust as a) where
+    SIJust' :: SIJust as a i -> SIJust' i
+type instance Sing = SIJust'
 
 instance SingI 'IJust where
     sing = SIJust' SIJust
@@ -495,8 +497,9 @@ data SIRight as a :: IRight as a -> Type where
 
 deriving instance Show (SIRight as a i)
 
-newtype instance Sing (i :: IRight as a) where
-    SIRight' :: SIRight as a i -> Sing i
+newtype SIRight' (i :: IRight as a) where
+    SIRight' :: SIRight as a i -> SIRight' i
+type instance Sing = SIRight'
 
 instance SingI 'IRight where
     sing = SIRight' SIRight
@@ -561,8 +564,9 @@ data SNEIndex as a :: NEIndex as a -> Type where
 
 deriving instance Show (SNEIndex as a i)
 
-newtype instance Sing (i :: NEIndex as a) where
-    SNEIndex' :: SNEIndex as a i -> Sing i
+newtype SNEIndex' (i :: NEIndex as a) where
+    SNEIndex' :: SNEIndex as a i -> SNEIndex' i
+type instance Sing = SNEIndex'
 
 instance SingI 'NEHead where
     sing = SNEIndex' SNEHead
@@ -674,8 +678,9 @@ data SISnd as a :: ISnd as a -> Type where
 
 deriving instance Show (SISnd as a i)
 
-newtype instance Sing (i :: ISnd as a) where
-    SISnd' :: SISnd as a i -> Sing i
+newtype SISnd' (i :: ISnd as a) where
+    SISnd' :: SISnd as a i -> SISnd' i
+type instance Sing = SISnd'
 
 instance SingI 'ISnd where
     sing = SISnd' SISnd
@@ -721,8 +726,9 @@ data SIProxy as a :: IProxy as a -> Type
 
 deriving instance Show (SIProxy as a i)
 
-newtype instance Sing (i :: IProxy as a) where
-    SIProxy' :: SIProxy as a i -> Sing i
+newtype SIProxy' (i :: IProxy as a) where
+    SIProxy' :: SIProxy as a i -> SIProxy' i
+type instance Sing = SIProxy'
 
 instance SingKind (IProxy as a) where
     type Demote (IProxy as a) = IProxy as a
@@ -763,8 +769,9 @@ data SIIdentity as a :: IIdentity as a -> Type where
 
 deriving instance Show (SIIdentity as a i)
 
-newtype instance Sing (i :: IIdentity as a) where
-    SIIdentity' :: SIIdentity as a i -> Sing i
+newtype SIIdentity' (i :: IIdentity as a) where
+    SIIdentity' :: SIIdentity as a i -> SIIdentity' i
+type instance Sing = SIIdentity'
 
 instance SingI 'IId where
     sing = SIIdentity' SIId
@@ -806,8 +813,9 @@ data (f :.: g) a = Comp { getComp :: f (g a) }
     deriving (Show, Eq, Ord, Functor, Foldable, Typeable, Generic)
 deriving instance (Traversable f, Traversable g) => Traversable (f :.: g)
 
-data instance Sing (k :: (f :.: g) a) where
-    SComp :: Sing x -> Sing ('Comp x)
+data (%:.:) (k :: (f :.: g) a) where
+    SComp :: Sing x -> (%:.:) ('Comp x)
+type instance Sing = (%:.:)
 
 -- | 'getComp' lifted to the type level
 --
@@ -928,9 +936,10 @@ data (f :+: g) a = InL (f a)
     deriving (Show, Eq, Ord, Functor, Foldable, Typeable, Generic)
 deriving instance (Traversable f, Traversable g) => Traversable (f :+: g)
 
-data instance Sing (k :: (f :+: g) a) where
-    SInL :: Sing x -> Sing ('InL x)
-    SInR :: Sing y -> Sing ('InR y)
+data (%:+:) (k :: (f :+: g) a) where
+    SInL :: Sing x -> (%:+:) ('InL x)
+    SInR :: Sing y -> (%:+:) ('InR y)
+type instance Sing = (%:+:)
 
 type family FromL s where
     FromL ('InL a) = a

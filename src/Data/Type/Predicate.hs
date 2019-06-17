@@ -127,7 +127,7 @@ type TyPred = (TyCon1 :: (k -> Type) -> Predicate k)
 -- @
 -- 'Evident' :: 'Predicate' k
 -- @
-type Evident = (TyPred Sing :: Predicate k)
+type Evident = (TyPred WrappedSing :: Predicate k)
 
 -- | The always-false predicate
 --
@@ -352,7 +352,7 @@ instance (SDecide k, SingI (a :: k)) => Decidable (EqualTo a) where
 
 instance Decidable Evident
 instance Provable Evident where
-    prove = id
+    prove = WrapSing
 
 instance (Decidable p, SingI f) => Decidable (PMap f p) where
     decide = decide @p . applySing (sing :: Sing f)
@@ -376,7 +376,7 @@ instance Decidable p => Decidable (Not p) where
     decide (x :: Sing a) = decideNot @p @a (decide @p x)
 
 instance Provable (Not Impossible) where
-    prove x v = absurd $ v x
+    prove x v = absurd $ v $ WrapSing x
 
 -- | Decide @'Not' p@ based on decisions of @p@.
 decideNot

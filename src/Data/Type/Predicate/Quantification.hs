@@ -42,6 +42,7 @@ module Data.Type.Predicate.Quantification (
   , anyNotNotAll, notAllAnyNot
   ) where
 
+import           Data.Coerce
 import           Data.Kind
 import           Data.Singletons
 import           Data.Singletons.Decide
@@ -163,7 +164,7 @@ decideEntailAll = dmap @(All f)
 --
 -- @since 0.1.2.0
 anyImpossible :: Universe f => Any f Impossible --> Impossible
-anyImpossible _ (WitAny i p) = p . index i
+anyImpossible _ (WitAny i p) = p . coerce (index i)
 
 -- | If any @a@ in @as@ does not satisfy @p@, then not all @a@ in @as@
 -- satisfy @p@.

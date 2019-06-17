@@ -200,11 +200,11 @@ infixr 1 <==>
 -- | From @'Impossible' @@ a@, you can prove anything.  Essentially
 -- a lifted version of 'absurd'.
 explosion :: Impossible --> p
-explosion x v = absurd $ v x
+explosion x v = absurd $ v $ WrapSing x
 
 -- | 'Evident' can be proven from all predicates.
 atom :: p --> Evident
-atom = const
+atom = const . WrapSing
 
 -- | We cannot have both @p@ and @'Not' p@.
 --

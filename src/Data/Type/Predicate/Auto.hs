@@ -84,11 +84,11 @@ class Auto (p :: Predicate k) (a :: k) where
     auto :: p @@ a
 
 instance SingI a => Auto Evident a where
-    auto = sing
+    auto = WrapSing sing
 
 -- | @since 0.1.2.0
 instance SingI a => Auto (Not Impossible) a where
-    auto = ($ sing)
+    auto = ($ WrapSing sing)
 
 instance Auto (EqualTo a) a where
     auto = Refl
@@ -180,7 +180,7 @@ instance AutoElem g bs b => AutoElem (f :+: g) ('InR bs) b where
     autoElem = IInR autoElem
 
 instance AutoElem f as a => Auto (In f as) a where
-    auto = autoElem @f @as @a
+    auto = autoElem @_ @f @as @a
 
 -- | Helper class for deriving 'Auto' instances for 'All' predicates; each
 -- 'Universe' instance is expected to implement these if possible, to get
@@ -200,7 +200,7 @@ instance AutoAll [] p '[] where
 instance (Auto p a, AutoAll [] p as) => AutoAll [] p (a ': as) where
     autoAll = WitAll $ \case
         IZ   -> auto @_ @p @a
-        IS i -> runWitAll (autoAll @[] @p @as) i
+        IS i -> runWitAll (autoAll @_ @[] @p @as) i
 
 instance AutoAll Maybe p 'Nothing where
     autoAll = WitAll $ \case {}
@@ -217,11 +217,11 @@ instance Auto p a => AutoAll (Either j) p ('Right a) where
 instance (Auto p a, AutoAll [] p as) => AutoAll NonEmpty p (a ':| as) where
     autoAll = WitAll $ \case
         NEHead   -> auto @_ @p @a
-        NETail i -> runWitAll (autoAll @[] @p @as) i
+        NETail i -> runWitAll (autoAll @_ @[] @p @as) i
 
 instance AutoAll f (All g p) ass => AutoAll (f :.: g) p ('Comp ass) where
     autoAll = WitAll $ \(i :? j) ->
-      runWitAll (runWitAll (autoAll @f @(All g p) @ass) i) j
+      runWitAll (runWitAll (autoAll @_ @f @(All g p) @ass) i) j
 
 instance Auto p a => AutoAll ((,) j) p '(w, a) where
     autoAll = WitAll $ \case ISnd -> auto @_ @p @a
@@ -233,37 +233,37 @@ instance Auto p a => AutoAll Identity p ('Identity a) where
     autoAll = WitAll $ \case IId -> auto @_ @p @a
 
 instance AutoAll f p as => AutoAll (f :+: g) p ('InL as) where
-    autoAll = allSumL $ autoAll @f @p @as
+    autoAll = allSumL $ autoAll @_ @f @p @as
 
 instance AutoAll g p bs => AutoAll (f :+: g) p ('InR bs) where
-    autoAll = allSumR $ autoAll @g @p @bs
+    autoAll = allSumR $ autoAll @_ @g @p @bs
 
 -- | @since 0.1.2.0
 instance AutoAll f p as => Auto (All f p) as where
-    auto = autoAll @f @p @as
+    auto = autoAll @_ @f @p @as
 
 -- | @since 0.1.2.0
 instance SingI a => Auto (NotNull []) (a ': as) where
-    auto = WitAny IZ sing
+    auto = WitAny IZ $ WrapSing sing
 
 -- | @since 0.1.2.0
 instance SingI a => Auto IsJust ('Just a) where
-    auto = WitAny IJust sing
+    auto = WitAny IJust $ WrapSing sing
 
 -- | @since 0.1.2.0
 instance SingI a => Auto IsRight ('Right a) where
-    auto = WitAny IRight sing
+    auto = WitAny IRight $ WrapSing sing
 
 -- | @since 0.1.2.0
 instance SingI a => Auto (NotNull NonEmpty) (a ':| as) where
-    auto = WitAny NEHead sing
+    auto = WitAny NEHead $ WrapSing sing
 
 -- | @since 0.1.2.0
 instance SingI a => Auto (NotNull ((,) j)) '(w, a) where
-    auto = WitAny ISnd sing
+    auto = WitAny ISnd $ WrapSing sing
 
 instance SingI a => Auto (NotNull Identity) ('Identity a) where
-    auto = WitAny IId sing
+    auto = WitAny IId $ WrapSing sing
 
 instance Auto (NotNull f) as => Auto (NotNull (f :+: g)) ('InL as) where
     auto = anySumL $ auto @_ @(NotNull f) @as
@@ -320,7 +320,7 @@ autoAny i = WitAny i (auto @_ @p @a)
 
 -- | @since 0.1.2.0
 instance (SingI as, AutoAll f (Not p) as) => Auto (Not (Any f p)) as where
-    auto = allNotNone sing $ autoAll @f @(Not p) @as
+    auto = allNotNone sing $ autoAll @_ @f @(Not p) @as
 
 -- | Helper function to generate a @'Not' ('All' f p)@ if you can pick out
 -- a specific @a@ in @as@ where the predicate is disprovable at compile-time.

@@ -139,7 +139,7 @@ type instance Apply (EqBy f x) y = x :~: (f @@ y)
 -- @
 --
 -- Applied to specific things:
--- 
+--
 -- @
 -- 'IsTC' ''Just' :: 'ParamPred' (Maybe v) v
 -- 'Found' ('IsTC' ''Just'') :: 'Predicate' (Maybe v)
@@ -296,17 +296,17 @@ type InP f = (ElemSym1 f :: ParamPred (f k) k)
 --
 -- @since 0.1.2.0
 notNullInP :: NotNull f --> Found (InP f)
-notNullInP _ (WitAny i s) = s :&: i
+notNullInP _ (WitAny i s) = unwrapSing s :&: i
 
 -- | @'NotNull' f@ is basically @'Found' ('InP' f)@.
 --
 -- @since 0.1.2.0
 inPNotNull :: Found (InP f) --> NotNull f
-inPNotNull _ (s :&: i) = WitAny i s
+inPNotNull _ (s :&: i) = WitAny i $ WrapSing s
 
 instance Universe f => Decidable (Found (InP f)) where
-    decide = mapDecision (\case WitAny i s -> s :&: i    )
-                         (\case s :&: i     -> WitAny i s)
+    decide = mapDecision (\case WitAny i s -> unwrapSing s :&: i    )
+                         (\case s :&: i     -> WitAny i $ WrapSing s)
            . decide @(NotNull f)
 
 instance Decidable (NotNull f ==> Found (InP f))
