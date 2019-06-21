@@ -39,6 +39,7 @@ module Data.Type.Predicate.Auto (
   ) where
 
 import           Data.Functor.Identity
+import           Data.Kind
 import           Data.List.NonEmpty                 (NonEmpty(..))
 import           Data.Singletons
 import           Data.Singletons.Sigma
@@ -190,7 +191,7 @@ instance AutoElem f as a => Auto (In f as) a where
 -- predicates.
 --
 -- @since 0.1.2.0
-class AutoAll f (p :: Predicate k) (as :: f k) where
+class AutoAll (f :: Type -> Type) (p :: Predicate k) (as :: f k) where
     -- | Generate an 'All' for a given predicate over all items in @as@.
     autoAll :: All f p @@ as
 

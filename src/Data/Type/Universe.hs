@@ -306,26 +306,23 @@ data SIndex as a :: Index as a -> Type where
 
 deriving instance Show (SIndex as a i)
 
-newtype SIndex' (i :: Index as a) where
-    SIndex' :: SIndex as a i -> SIndex' i
-type instance Sing = SIndex'
+type instance Sing @(Index as a) = SIndex as a
 
 instance SingI 'IZ where
-    sing = SIndex' SIZ
+    sing = SIZ
 
 instance SingI i => SingI ('IS i) where
-    sing = case sing of
-      SIndex' i -> SIndex' (SIS i)
+    sing = SIS sing
 
 instance SingKind (Index as a) where
     type Demote (Index as a) = Index as a
-    fromSing (SIndex' i) = go i
+    fromSing = go
       where
         go :: SIndex bs b i -> Index bs b
         go = \case
           SIZ   -> IZ
           SIS j -> IS (go j)
-    toSing i = go i (SomeSing . SIndex')
+    toSing i = go i SomeSing
       where
         go :: Index bs b -> (forall i. SIndex bs b i -> r) -> r
         go = \case
@@ -333,7 +330,7 @@ instance SingKind (Index as a) where
           IS j -> \f -> go j (f . SIS)
 
 instance SDecide (Index as a) where
-    SIndex' i %~ SIndex' j = go i j
+    (%~) = go
       where
         go :: SIndex bs b i -> SIndex bs b j -> Decision (i :~: j)
         go = \case
@@ -432,20 +429,18 @@ data SIJust as a :: IJust as a -> Type where
 
 deriving instance Show (SIJust as a i)
 
-newtype SIJust' (i :: IJust as a) where
-    SIJust' :: SIJust as a i -> SIJust' i
-type instance Sing = SIJust'
+type instance Sing @(IJust as a) = SIJust as a
 
 instance SingI 'IJust where
-    sing = SIJust' SIJust
+    sing = SIJust
 
 instance SingKind (IJust as a) where
     type Demote (IJust as a) = IJust as a
-    fromSing (SIJust' SIJust) = IJust
-    toSing IJust = SomeSing (SIJust' SIJust)
+    fromSing SIJust = IJust
+    toSing IJust = SomeSing SIJust
 
 instance SDecide (IJust as a) where
-    SIJust' SIJust %~ SIJust' SIJust = Proved Refl
+    SIJust %~ SIJust = Proved Refl
 
 type instance Elem Maybe = IJust
 
@@ -497,20 +492,18 @@ data SIRight as a :: IRight as a -> Type where
 
 deriving instance Show (SIRight as a i)
 
-newtype SIRight' (i :: IRight as a) where
-    SIRight' :: SIRight as a i -> SIRight' i
-type instance Sing = SIRight'
+type instance Sing @(IRight as a) = SIRight as a
 
 instance SingI 'IRight where
-    sing = SIRight' SIRight
+    sing = SIRight
 
 instance SingKind (IRight as a) where
     type Demote (IRight as a) = IRight as a
-    fromSing (SIRight' SIRight) = IRight
-    toSing IRight = SomeSing (SIRight' SIRight)
+    fromSing SIRight = IRight
+    toSing IRight = SomeSing SIRight
 
 instance SDecide (IRight as a) where
-    SIRight' SIRight %~ SIRight' SIRight = Proved Refl
+    SIRight %~ SIRight = Proved Refl
 
 type instance Elem (Either j) = IRight
 
@@ -564,35 +557,31 @@ data SNEIndex as a :: NEIndex as a -> Type where
 
 deriving instance Show (SNEIndex as a i)
 
-newtype SNEIndex' (i :: NEIndex as a) where
-    SNEIndex' :: SNEIndex as a i -> SNEIndex' i
-type instance Sing = SNEIndex'
+type instance Sing @(NEIndex as a) = SNEIndex as a
 
 instance SingI 'NEHead where
-    sing = SNEIndex' SNEHead
+    sing = SNEHead
 
 instance SingI i => SingI ('NETail i) where
-    sing = case sing of
-      SIndex' i -> SNEIndex' (SNETail i)
+    sing = SNETail sing
 
 instance SingKind (NEIndex as a) where
     type Demote (NEIndex as a) = NEIndex as a
     fromSing = \case
-      SNEIndex' SNEHead     -> NEHead
-      SNEIndex' (SNETail i) -> NETail $ fromSing (SIndex' i)
+      SNEHead   -> NEHead
+      SNETail i -> NETail $ fromSing i
     toSing = \case
-      NEHead   -> SomeSing (SNEIndex' SNEHead)
-      NETail i -> withSomeSing i $ \case
-        SIndex' j -> SomeSing (SNEIndex' (SNETail j))
+      NEHead   -> SomeSing SNEHead
+      NETail i -> withSomeSing i $ SomeSing . SNETail
 
 instance SDecide (NEIndex as a) where
     (%~) = \case
-      SNEIndex' SNEHead -> \case
-        SNEIndex' SNEHead     -> Proved Refl
-        SNEIndex' (SNETail _) -> Disproved $ \case {}
-      SNEIndex' (SNETail i) -> \case
-        SNEIndex' SNEHead -> Disproved $ \case {}
-        SNEIndex' (SNETail j) -> case SIndex' i %~ SIndex' j of
+      SNEHead -> \case
+        SNEHead   -> Proved Refl
+        SNETail _ -> Disproved $ \case {}
+      SNETail i -> \case
+        SNEHead   -> Disproved $ \case {}
+        SNETail j -> case i %~ j of
           Proved Refl -> Proved Refl
           Disproved v -> Disproved $ \case Refl -> v Refl
 
@@ -678,20 +667,18 @@ data SISnd as a :: ISnd as a -> Type where
 
 deriving instance Show (SISnd as a i)
 
-newtype SISnd' (i :: ISnd as a) where
-    SISnd' :: SISnd as a i -> SISnd' i
-type instance Sing = SISnd'
+type instance Sing @(ISnd as a) = SISnd as a
 
 instance SingI 'ISnd where
-    sing = SISnd' SISnd
+    sing = SISnd
 
 instance SingKind (ISnd as a) where
     type Demote (ISnd as a) = ISnd as a
-    fromSing (SISnd' SISnd) = ISnd
-    toSing ISnd = SomeSing (SISnd' SISnd)
+    fromSing SISnd = ISnd
+    toSing ISnd = SomeSing SISnd
 
 instance SDecide (ISnd as a) where
-    SISnd' SISnd %~ SISnd' SISnd = Proved Refl
+    SISnd %~ SISnd = Proved Refl
 
 type instance Elem ((,) j) = ISnd
 
@@ -726,17 +713,15 @@ data SIProxy as a :: IProxy as a -> Type
 
 deriving instance Show (SIProxy as a i)
 
-newtype SIProxy' (i :: IProxy as a) where
-    SIProxy' :: SIProxy as a i -> SIProxy' i
-type instance Sing = SIProxy'
+type instance Sing @(IProxy as a) = SIProxy as a
 
 instance SingKind (IProxy as a) where
     type Demote (IProxy as a) = IProxy as a
-    fromSing (SIProxy' i) = case i of {}
+    fromSing i = case i of {}
     toSing = \case {}
 
 instance SDecide (IProxy as a) where
-    SIProxy' i %~ SIProxy' _ = Proved $ case i of {}
+    i %~ _ = Proved $ case i of {}
 
 type instance Elem Proxy = IProxy
 
@@ -769,20 +754,18 @@ data SIIdentity as a :: IIdentity as a -> Type where
 
 deriving instance Show (SIIdentity as a i)
 
-newtype SIIdentity' (i :: IIdentity as a) where
-    SIIdentity' :: SIIdentity as a i -> SIIdentity' i
-type instance Sing = SIIdentity'
+type instance Sing @(IIdentity as a) = SIIdentity as a
 
 instance SingI 'IId where
-    sing = SIIdentity' SIId
+    sing = SIId
 
 instance SingKind (IIdentity as a) where
     type Demote (IIdentity as a) = IIdentity as a
-    fromSing (SIIdentity' SIId) = IId
-    toSing IId = SomeSing (SIIdentity' SIId)
+    fromSing SIId = IId
+    toSing IId = SomeSing SIId
 
 instance SDecide (IIdentity as a) where
-    SIIdentity' SIId %~ SIIdentity' SIId = Proved Refl
+    SIId %~ SIId = Proved Refl
 
 type instance Elem Identity = IIdentity
 
